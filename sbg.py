@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 import markdown as md
 from rich import print
-import os, json, datetime
+import os, json, datetime, dorf
 from sys import exit # required for pyinstaller builds
 
 ap = ArgumentParser()
@@ -16,7 +16,7 @@ if not os.path.isdir(args.folder):
     print(':x:', f'Folder "{args.folder}" does not exist. Generating a blog folder...')
     os.makedirs(f'{args.folder}/public')
     os.makedirs(f'{args.folder}/posts')
-    os.makedirs(f'{args.folder}/components')
+    os.makedirs(f'{args.folder}/components/posts')
     with open(f'{args.folder}/sbg.json', 'w') as f:
         f.write('''{
   "import": ["components/header", "components/smallpost"],
@@ -49,6 +49,15 @@ if not os.listdir(f'{args.folder}/posts'):
 
 print(':white_check_mark:', 'Ready to generate posts!')
 
+renderer = dorf.Renderer()
+
+with open(f'{args.folder}/sbg.json') as f:
+    config: dict = json.loads(f.read())
+
+for file in config['import']:
+    with open(f'{args.folder}/{file}.html') as f:
+        renderer.import_components(f.read())
+
 files = []
 for f in os.listdir(f'{args.folder}/posts'):
     if not f.startswith('_') and f.endswith('.md') and os.path.isfile(f'{args.folder}/posts/{f}'):
@@ -68,12 +77,27 @@ def parse_post(markdown_string):
         elif header_stat == 1:
             header += line
         else:
-            file += line
+            file += line + '\n'
 
     return json.loads(header), md.markdown(file)
+
+posts = {}
+
+with open(f'{args.folder}/components/postpage.html', 'r') as f:
+    html_template = f.read()
 
 for file in sorted_posts:
     full_path = f'{args.folder}/posts/{file}'
 
     with open(full_path, 'r') as f:
-        print('Post', file, ':', parse_post(f.read()))
+        converted_post = parse_post(f.read())
+        posts[file] = converted_post
+        
+        html_file_path = f'{args.folder}/public/posts/' + file.rstrip('.md') + '.html'
+        with open(html_file_path, 'w') as f:
+            f.write(html_template.format(
+                date=datetime.datetime.strptime(converted_post[0]['date'], '%Y-%m-%dT%H:%M:%S.%fZ'),
+                title=converted_post[0]['title'],
+                author=converted_post[0]['author'],
+                content=converted_post[1]
+            ))
