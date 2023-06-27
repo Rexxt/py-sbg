@@ -9,4 +9,4 @@ class Generator:
 
     def make_page(self, name, function, data=None):
         with open(f'{self.gen_dir}/{name}.html', 'w') as f:
-            f.write(function(None))
+            f.write(function(data))
