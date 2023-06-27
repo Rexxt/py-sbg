@@ -9,7 +9,7 @@ just create a generator:
 from webflex.generator import Generator
 from webflex.templates import HTML5
 
-gen = Generator('docs/') # directory where everything should be generated
+gen = Generator('docs') # directory where everything should be generated
 ```
 
 then write your webpage, here we'll just create a hello world example:
@@ -33,10 +33,10 @@ from webflex.generator import Generator
 from webflex.templates import CommonHTML5
 
 HTML5 = CommonHTML5(
-    stylesheet = 'docs/style.css',
+    stylesheets = ['docs/style.css'],
 )
 
-gen = Generator('docs/')
+gen = Generator('docs')
 
 def Header(focused_tab):
     tabs = {
